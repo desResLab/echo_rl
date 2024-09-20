@@ -2263,8 +2263,8 @@ class Echo:
                 if 'waiting' in patient['status']:
                     penalty += 5
         for patient in patients_waiting_ontime:
-            if patient['Arrival time'] >= patient['Schedule time']:
-                penalty += 4 * (self.env.now - patient['Arrival time'])
+            if self.env.now >= patient['Schedule time']:
+                penalty += 4 * (self.env.now - patient['Schedule time'])
         for patient in patients_waiting_late:
             penalty += 2 * (self.env.now - patient['Arrival time'])
         return penalty

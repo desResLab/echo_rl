@@ -370,14 +370,14 @@ class Echo:
                     i += 1
     def _action(self,action_int):
         action = [0] * 6
-        action[0] = action_int//72
-        action_int = action_int % 72
-        action[1] = action_int//36
-        action_int = action_int % 36
-        action[2] = action_int//18
-        action_int = action_int % 18
-        action[3] = action_int//6
-        action_int = action_int % 6
+        action[0] = action_int//32
+        action_int = action_int % 32
+        action[1] = action_int//16
+        action_int = action_int % 16
+        action[2] = action_int//8
+        action_int = action_int % 8
+        action[3] = action_int//4
+        action_int = action_int % 4
         action[4] = action_int//2
         action_int = action_int % 2
         action[5] = action_int
@@ -680,6 +680,11 @@ class Echo:
         # the function to reset
     def reset(self):
         self.env = simpy.Environment()
+        self.state = {
+            'patients': [],
+            'sonographers': [],
+            'rooms': []
+        }
         self.reserved_fetal_pair = []
         self.reserved_nonfetal_pair = []
         self._load_schedules()
@@ -718,8 +723,8 @@ class Echo:
                 if 'waiting' in patient['status']:
                     penalty += 5
         for patient in patients_waiting_ontime:
-            if patient['Arrival time'] >= patient['Schedule time']:
-                penalty += 4 * (self.env.now - patient['Arrival time'])
+            if self.env.now >= patient['Schedule time']:
+                penalty += 4 * (self.env.now - patient['Schedule time'])
         for patient in patients_waiting_late:
             penalty += 2 * (self.env.now - patient['Arrival time'])
         return penalty
@@ -727,7 +732,6 @@ class Echo:
 
 # the function to simulate the steps
     def step(self, action_int, render):
-        self._convert_early_patients()
         self._action(action_int)
         reward = (-1)*self._penalty_calculation()
         terminal = True if self.env.now > self.convert_to_step(self.time_close) + 120 else False

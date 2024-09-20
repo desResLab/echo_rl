@@ -10,20 +10,20 @@ from collections import deque
 
 
 # Discount rate of future rewards
-GAMMA = 0.95
+GAMMA = 0.9
 # Learing rate for neural network
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.005
 # Maximum number of game steps (state, action, reward, next state) to keep
 MEMORY_SIZE = 1000000
 # Sample batch size for policy network update
-BATCH_SIZE = 10
+BATCH_SIZE = 128
 # Exploration rate (epislon) is probability of choosing a random action
 EXPLORATION_MAX = 1.0
 EXPLORATION_MIN = 0.01
 # Reduction in epsilon with each game step
-EXPLORATION_DECAY = 0.999
+EXPLORATION_DECAY = 0.99
 # Training episodes
-TRAINING_EPISODES = 50
+TRAINING_EPISODES = 1000
 
 
 class DQN(nn.Module):
@@ -41,20 +41,20 @@ class DQN(nn.Module):
             nn.ReLU(),
             nn.Linear(48, 48),
             nn.ReLU(),
-            nn.Linear(48, 144)
+            nn.Linear(48, 64)
         )
 
         # Initialize weights and biases to 0
         self.net.apply(self._init_weights)
 
         # Set loss function and optimizer
-        self.objective = nn.MSELoss()
+        self.objective = nn.SmoothL1Loss()  # Huber loss
         self.optimizer = optim.Adam(params=self.net.parameters(), lr=LEARNING_RATE)
 
     def _init_weights(self, m):
         """Initialize weights and biases to 0."""
         if isinstance(m, nn.Linear):
-            nn.init.constant_(m.weight, 0)  # Set weights to 0
+            nn.init.constant_(m.weight, 0)
             nn.init.constant_(m.bias, 0)    # Set biases to 0
 
 
@@ -68,10 +68,10 @@ class DQN(nn.Module):
                 for k in range(min(fetal_pair + 1 - i - j, state[2] + 1, 2)):
                     for l in range(min(state[6] + state[7] + 1 - i - j - k,
                                        state[8] + state[9] + 1 - i - j - k,
-                                       state[3] + 1, 3)):
+                                       state[3] + 1, 2)):
                         for m in range(min(state[6] + state[7] + 1 - i - j - k - l,
                                            state[8] + state[9] + 1 - i - j - k - l,
-                                           state[4] + 1, 3)):
+                                           state[4] + 1, 2)):
                             for n in range(min(state[6] + state[7] + 1 - i - j - k - l - m,
                                            state[8] + state[9] + 1 - i - j - k - l - m,
                                            state[5] + 1, 2)):
@@ -79,7 +79,7 @@ class DQN(nn.Module):
 
         # Convert valid actions to integer representations
         for a in action:
-            action_int.append(a[0] * 72 + a[1] * 36 + a[2] * 18 + a[3] * 6 + a[4] * 2 + a[5])
+            action_int.append(a[0] * 32 + a[1] * 16 + a[2] * 8 + a[3] * 4 + a[4] * 2 + a[5])
 
         # Act randomly if random number < exploration rate
         if np.random.rand() < self.exploration_rate:
@@ -186,26 +186,33 @@ class Memory():
         self.memory.append((state, action, reward, next_state, done))
 
 
-def plot_results(total_reward_trivial_vector, total_reward_learning_vector):
+def plot_difference(total_reward_trivial_vector, total_reward_learning_vector):
+    # Convert to NumPy arrays for element-wise subtraction
+    total_reward_trivial_vector = np.array(total_reward_trivial_vector)
+    total_reward_learning_vector = np.array(total_reward_learning_vector)
+
+    # Ensure vectors are the same length (optional step if necessary)
+    min_len = min(len(total_reward_trivial_vector), len(total_reward_learning_vector))
+    total_reward_trivial_vector = total_reward_trivial_vector[:min_len]
+    total_reward_learning_vector = total_reward_learning_vector[:min_len]
+
+    # Compute the reward difference
+    total_reward_difference = total_reward_trivial_vector - total_reward_learning_vector
+
     # Create a range for the x-axis that starts from 1 and goes to the length of the vectors
     x_values = range(1, len(total_reward_trivial_vector) + 1)
 
     # Create the plot
     plt.figure(figsize=(10, 6))
-
-    # Plot the trivial reward curve
-    plt.plot(x_values, total_reward_trivial_vector, label="Trivial Policy", color='blue', marker='o')
-
-    # Plot the learning reward curve
-    plt.plot(x_values, total_reward_learning_vector, label="Learning Policy", color='green', marker='x')
+    plt.xticks(np.arange(1, len(total_reward_trivial_vector) + 1, step=100))
+    # Plot the reward difference curve
+    plt.plot(x_values, total_reward_difference, label="Reward Difference", color='blue', marker='o')
 
     # Add labels and title
     plt.xlabel("Index")
-    plt.ylabel("Total Reward")
+    plt.ylabel("Total Reward Difference")
     plt.title("Total Reward Comparison: Trivial vs Learning Policy")
 
-    # Ensure that x-ticks are integers
-    plt.xticks(x_values)
 
     # Add a legend to differentiate the two curves
     plt.legend()
@@ -214,6 +221,47 @@ def plot_results(total_reward_trivial_vector, total_reward_learning_vector):
     plt.grid(True)
     plt.show()
 
+
+def plot_results(total_penalty_trivial_vector, total_penalty_learning_vector):
+    # Convert to NumPy arrays
+    total_penalty_trivial_vector = np.array(total_penalty_trivial_vector)
+    total_penalty_learning_vector = np.array(total_penalty_learning_vector)
+
+    # Ensure vectors are the same length
+    min_len = min(len(total_penalty_trivial_vector), len(total_penalty_learning_vector))
+    total_penalty_trivial_vector = total_penalty_trivial_vector[:min_len]
+    total_penalty_learning_vector = total_penalty_learning_vector[:min_len]
+
+    # Create a range for the x-axis that starts from 1 and goes to the length of the vectors
+    x_values = range(1, min_len + 1)
+
+    # Create the plot
+    plt.figure(figsize=(10, 6))
+
+    # Plot the trivial penalty above the x-axis
+    plt.bar(x_values, total_penalty_trivial_vector, label="Trivial Policy Penalty", color='blue')
+
+    # Plot the learning penalty below the x-axis (negative of the values)
+    plt.bar(x_values, -total_penalty_learning_vector, label="Learning Policy Penalty", color='green')
+
+    # Add labels and title
+    plt.xlabel("Index")
+    plt.ylabel("Total Penalty")
+    plt.title("Penalty Comparison: Trivial vs Learning Policy")
+
+    # Set x-ticks to display every 100 points
+    plt.xticks(np.arange(1, min_len + 1, step=100))
+
+    # Modify the y-ticks so that they are all positive
+    y_ticks = plt.gca().get_yticks()  # Get the original y-ticks
+    plt.gca().set_yticklabels([f"{abs(tick):.0f}" for tick in y_ticks])  # Set all y-ticks to positive values
+
+    # Add a legend to differentiate the two curves
+    plt.legend()
+
+    # Display the plot
+    plt.grid(True)
+    plt.show()
 
 
 time_start = '08:00'
@@ -375,10 +423,11 @@ def echo_management():
             if terminal:
                 # Clear print row content
                 clear_row = '\r' + ' ' * 79 + '\r'
-                print(clear_row, end='')
+                # print(clear_row, end='')
                 print(f'Run: {run}, ', end='')
                 print(f'Learning policy total penalty: {total_penalty_learning}, ', end=' ')
                 print(f'Trivial policy total penalty: {total_penalty_trivial}, ', end='')
+                print()
                 total_penalty_learning_vector.append(total_penalty_learning)
                 total_penalty_trivial_vector.append(total_penalty_trivial)
 
@@ -398,7 +447,7 @@ def echo_management():
             ####################################################################
 
             # Avoid training model if memory is not of sufficient length
-            if len(memory.memory) > (sim1.convert_to_step(time_close) + 120)*10:
+            if len(memory.memory) > (sim1.convert_to_step(time_close) + 120)*1:
 
                 # Update policy net
                 optimize(policy_net, target_net, memory.memory)
@@ -417,4 +466,5 @@ def echo_management():
 
     # Target reached. Plot results
     plot_results(total_penalty_trivial_vector, total_penalty_learning_vector)
+    plot_difference(total_penalty_trivial_vector, total_penalty_learning_vector)
 echo_management()
