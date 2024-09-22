@@ -23,7 +23,7 @@ EXPLORATION_MIN = 0.01
 # Reduction in epsilon with each game step
 EXPLORATION_DECAY = 0.99
 # Training episodes
-TRAINING_EPISODES = 1000
+TRAINING_EPISODES = 2000
 
 
 class DQN(nn.Module):
