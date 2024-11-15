@@ -1,8 +1,15 @@
-echo_gym.py is the one used to create the echo environment in the gymnasium package.
-//
-agent_DQN is the class of the neural networks to do optimization task.
-//
-interface is the python file to see the running results.
+# Project Overview
 
+This project consists of three main Python files:
 
-The other codes I use to run on CRC, please ignore them.
+1. **echo_gym.py**  
+   This file is used to create the Echo environment within the Gymnasium package. It sets up the simulation environment where reinforcement learning can be applied.
+
+2. **agent_DQN.py**  
+   This file contains the DQN class, which defines the deep neural network used for optimization tasks. It includes methods for acting, training, and optimizing the policy.
+
+3. **interface.py**  
+   This script is used to run and observe the environment's behavior. It integrates the Echo environment with the DQN agent to test and visualize the agent's performance.
+
+> Note: Other scripts used for running on the CRC are not included here and can be ignored.
+
