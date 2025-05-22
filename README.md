@@ -1,18 +1,37 @@
-# Project Overview
+## 📁 Repository Structure
 
-This project consists of three main Python files:
+### [`model_plots/`](./model_plots/)
+This folder contains scripts to generate visualizations of the echo environment, including:
+- Distribution of echo test durations  
+- Patient arrival and scheduling patterns
 
-1. **echo_gym.py**  
-   This file is used to create the Echo environment within the Gymnasium package. It sets up the simulation environment where reinforcement learning can be applied.
+### [`Pre-defined policies/`](./Pre-defined%20policies/)
+This folder includes:
+- The environment for evaluating **pre-defined policies**
+- Dynamic plots of patient flow and resource usage over time
 
-2. **agent_DQN.py**  
-   This file contains the DQN class, which defines the deep neural network used for optimization tasks. It includes methods for acting, training, and optimizing the policy.
+### [`RL_codes/`](./RL_codes/)
+This folder includes:
+- Reinforcement learning agent training and evaluation code
+- Implementation of the custom RL environment
+- Support for two settings:
+  - **Resource-limited case**
+  - **Abundant-resource case**
 
-2. **Memory.py**  
-   This file contains the memory, which is used to store the (state, action, reward, state_next, terminated) pair for batch learning.
-   
-4. **interface.py**  
-   This script is used to run and observe the environment's behavior. It integrates the Echo environment with the DQN agent to test and visualize the agent's performance.
+### [`gymnasium/`](./gymnasium/)
+This folder provides a demo of how to integrate the echo environment into the **Gymnasium** package, including:
+- Custom environment registration
+- Gym-compatible wrappers
 
-> Note: Other scripts used for running on the CRC are not included here and can be ignored.
+### [`policy_comparison/`](./policy_comparison/)
+This folder contains code to generate comparative plots for different policies, including:
+- Penalty plots of different policies  
+- Violin plots of patients’ average waiting times  
+- Violin plots of sonographers’ average  
+- State-by-state analysis plots  
+- Running average reward comparison of policy 1, policy 2, and the RL-based policy
+
+---
+
+
 
